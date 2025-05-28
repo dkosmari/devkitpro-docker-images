@@ -1,0 +1,84 @@
+FROM debian:unstable-slim
+
+RUN apt -y update
+RUN apt -y upgrade
+
+RUN apt -y install \
+    apt-transport-https \
+    autoconf \
+    autoconf-archive \
+    automake \
+    bash-completion \
+    ccache \
+    curl \
+    doxygen \
+    gawk \
+    git \
+    gpg \
+    make \
+    mercurial \
+    mercurial-git \
+    patchutils \
+    sudo \
+    vim \
+    wget \
+    which
+
+RUN apt -y install --no-install-recommends --no-install-suggests \
+    cmake \
+    cmake-curses-gui \
+    cmake-extras \
+    meson
+
+# Enable ccache.
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-c++
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-cc
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-cpp
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-g++
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-gcc
+RUN ln -s /usr/bin/ccache /usr/local/bin/powerpc-eabi-ld
+
+# Store devkitPro gpg key locally.
+RUN mkdir -p /usr/local/share/keyring/
+RUN wget https://apt.devkitpro.org/devkitpro-pub.gpg -O /usr/local/share/keyring/devkitpro-pub.gpg
+
+# Add the devkitPro apt repository.
+RUN echo "deb [signed-by=/usr/local/share/keyring/devkitpro-pub.gpg] https://apt.devkitpro.org stable main" > /etc/apt/sources.list.d/devkitpro.list
+
+# Install devkitPro pacman.
+RUN apt -y update
+RUN ln -s /proc/mounts /etc/mtab
+RUN apt -y install devkitpro-pacman
+
+RUN dkp-pacman -Syyu --noconfirm
+
+RUN dkp-pacman -S --noconfirm wiiu-dev
+# Remove devkit-env, it messes up PATH.
+RUN dkp-pacman -R --noconfirm devkit-env
+# Install the rest of the Wii U packages.
+RUN dkp-pacman -S --noconfirm \
+    dkp-toolchain-vars \
+    ppc-dev \
+    ppc-portlibs \
+    wiiu-portlibs
+# Install SDL2 libs.
+RUN dkp-pacman -S --noconfirm wiiu-sdl2-libs
+
+# Clear pacman cache.
+RUN dkp-pacman --noconfirm -Scc
+
+# Create a regular user, no password.
+RUN adduser -u 1000 user
+RUN passwd -d user
+
+# Allow this user to sudo with no password.
+RUN echo "user	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers
+
+USER user
+
+ENV DEVKITPRO="/opt/devkitpro"
+ENV DEVKITPPC="$DEVKITPRO/devkitPPC"
+# Note: portlibs/wiiu takes precedence. Always append, to allow ccache to work.
+ENV PATH="$PATH:$DEVKITPRO/portlibs/wiiu/bin:$DEVKITPRO/portlibs/ppc/bin:$DEVKITPPC/bin"
+
+WORKDIR /home/user/src
