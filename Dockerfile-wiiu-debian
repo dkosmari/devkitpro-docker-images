@@ -1,3 +1,5 @@
+# -*- mode: dockerfile -*-
+
 FROM debian:unstable-slim
 
 RUN apt -y update

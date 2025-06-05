@@ -1,3 +1,5 @@
+# -*- mode: dockerfile -*-
+
 FROM alpine:latest
 
 RUN apk add \
