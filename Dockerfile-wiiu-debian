@@ -79,6 +79,9 @@ RUN passwd -d user
 # Allow this user to sudo with no password.
 RUN echo "user	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers
 
+WORKDIR /project
+RUN chown -R user:user /project
+
 USER user
 
 ENV DEVKITPRO="/opt/devkitpro"
@@ -86,4 +89,3 @@ ENV DEVKITPPC="$DEVKITPRO/devkitPPC"
 # Note: portlibs/wiiu takes precedence. Always append, to allow ccache to work.
 ENV PATH="$PATH:$DEVKITPRO/portlibs/wiiu/bin:$DEVKITPRO/portlibs/ppc/bin:$DEVKITPPC/bin"
 
-WORKDIR /project
