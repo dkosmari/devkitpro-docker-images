@@ -17,6 +17,7 @@ RUN apt -y install \
     gawk \
     git \
     gpg \
+    libtool \
     make \
     mercurial \
     mercurial-git \
